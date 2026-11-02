@@ -5,23 +5,10 @@ on:
     - cron: "0 3 * * 0" # Sundays 03:00 UTC
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   redeploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      # main requires PRs, so the empty commit goes via a PR that merges itself
-      - env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          branch="redeploy/${{ github.run_id }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit --allow-empty -m "Trigger deployment"
-          git push origin "HEAD:$branch"
-          gh pr create --base main --head "$branch" --title "Trigger deployment" --body "Weekly empty commit to trigger redeployment."
-          gh pr merge "$branch" --squash --delete-branch
+      - run: curl -fsS -X POST "$HOOK"
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
